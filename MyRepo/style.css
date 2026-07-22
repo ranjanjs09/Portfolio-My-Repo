@@ -1,0 +1,101 @@
+:root {
+    --dark-bg: #1a1a2e;
+    --light-text: #e0e0e0;
+    --secondary-text: #a0a0a0;
+    --primary-gradient-start: #6a11cb;
+    --primary-gradient-end: #2575fc;
+}
+
+/* Base Styles */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; /* Modern font stack */
+    line-height: 1.6;
+    background-color: var(--dark-bg);
+    color: var(--light-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hero Section */
+.hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+    background-color: var(--dark-bg);
+    position: relative;
+    overflow: hidden; /* Ensure no overflow from potential background elements */
+}
+
+.hero-content {
+    max-width: 900px;
+    width: 100%;
+    z-index: 10; /* Ensure content is above any background effects */
+}
+
+.hero h1 {
+    font-size: clamp(2rem, 5vw, 3rem); /* Responsive font size */
+    margin-bottom: 0.5rem;
+    color: var(--secondary-text);
+    font-weight: 400;
+}
+
+.hero h2 {
+    font-size: clamp(3.5rem, 10vw, 6rem); /* Very responsive font size for name */
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.1;
+    display: inline-block; /* Essential for gradient text */
+
+    /* Gradient Text */
+    background: linear-gradient(to right, var(--primary-gradient-start), var(--primary-gradient-end));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent; /* Fallback for browsers that don't support text-fill-color */
+    transition: all 0.3s ease-in-out;
+}
+
+/* Optional: Add a subtle hover effect for the name */
+.hero h2:hover {
+    transform: scale(1.02);
+    opacity: 0.95;
+}
+
+.hero p {
+    font-size: clamp(1rem, 2.5vw, 1.5rem); /* Responsive paragraph font size */
+    margin-top: 1.5rem;
+    max-width: 700px;
+    color: var(--light-text);
+    opacity: 0.9;
+}
+
+/* Optional: Add a subtle animation for the hero content */
+.hero-content {
+    animation: fadeInScale 1s ease-out forwards;
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

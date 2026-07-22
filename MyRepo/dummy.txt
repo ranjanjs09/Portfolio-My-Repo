@@ -1,0 +1,120 @@
+# Python automation for: run project tasks -> commit/push to GitHub -> post on LinkedIn
+# Requirements:
+#   pip install python-dotenv selenium webdriver-manager
+#   Install GitHub CLI: https://cli.github.com/
+#   Ensure `gh` is authenticated: gh auth login
+#   Set env vars before running:
+#     export PROJECT_DIR="/path/to/project"
+#     export REPO_REMOTE="origin"
+#     export COMMIT_MESSAGE="Automated update"
+#     export LINKEDIN_EMAIL="your@email.com"
+#     export LINKEDIN_PASSWORD="your-password"
+#     export LINKEDIN_POST_TEXT="Built and pushed an automated project update."
+#
+# Usage:
+#   python automate_project.py
+
+import os
+import sys
+import time
+import subprocess
+from pathlib import Path
+
+from dotenv import load_dotenv
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+
+
+load_dotenv()
+
+PROJECT_DIR = Path(os.getenv("PROJECT_DIR", ".")).resolve()
+REMOTE_NAME = os.getenv("REPO_REMOTE", "origin")
+COMMIT_MESSAGE = os.getenv("COMMIT_MESSAGE", "Automated project update")
+LINKEDIN_EMAIL = os.getenv("LINKEDIN_EMAIL")
+LINKEDIN_PASSWORD = os.getenv("LINKEDIN_PASSWORD")
+LINKEDIN_POST_TEXT = os.getenv("LINKEDIN_POST_TEXT", "Automated project update completed and pushed to GitHub.")
+
+
+def run(command, cwd=None, check=True):
+    print(f"\n>> {command}")
+    result = subprocess.run(command, cwd=cwd, shell=True, text=True, capture_output=True)
+    if check and result.returncode != 0:
+        print(result.stdout)
+        print(result.stderr)
+        raise RuntimeError(f"Command failed: {command}")
+    print(result.stdout)
+    print(result.stderr)
+    return result
+
+
+def run_project_tasks():
+    """Replace this with any task runner your project actually needs."""
+    # Example commands. Modify for your project.
+    commands = [
+        "python -m pip install -r requirements.txt",
+        "pytest -q",
+        "python app.py",
+    ]
+
+    for cmd in commands:
+        run(cmd, cwd=PROJECT_DIR)
+
+
+def push_to_github():
+    run("git -C \"%s\" status" % PROJECT_DIR)
+    run("git -C \"%s\" add ." % PROJECT_DIR)
+    run("git -C \"%s\" commit -m \"%s\"" % (PROJECT_DIR, COMMIT_MESSAGE))
+    run("git -C \"%s\" push %s" % (PROJECT_DIR, REMOTE_NAME))
+
+
+def post_to_linkedin():
+    if not LINKEDIN_EMAIL or not LINKEDIN_PASSWORD:
+        raise RuntimeError("Set LINKEDIN_EMAIL and LINKEDIN_PASSWORD env vars first.")
+
+    options = Options()
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1400,1200")
+    options.add_argument("--headless=new")
+
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+    try:
+        driver.get("https://www.linkedin.com/login")
+        time.sleep(2)
+
+        driver.find_element(By.ID, "username").send_keys(LINKEDIN_EMAIL)
+        driver.find_element(By.ID, "password").send_keys(LINKEDIN_PASSWORD)
+        driver.find_element(By.XPATH, "//button[@type='submit']").click()
+        time.sleep(5)
+
+        driver.get("https://www.linkedin.com/feed/")
+        time.sleep(3)
+
+        composer = driver.find_element(By.XPATH, "//button[contains(@aria-label, 'Create a post')]")
+        composer.click()
+        time.sleep(2)
+
+        text_box = driver.find_element(By.XPATH, "//div[@role='textbox']")
+        text_box.send_keys(LINKEDIN_POST_TEXT)
+        text_box.send_keys(Keys.CONTROL, Keys.ENTER)
+        time.sleep(5)
+
+        print("LinkedIn post submitted successfully.")
+    finally:
+        driver.quit()
+
+
+if __name__ == "__main__":
+    if not PROJECT_DIR.exists():
+        raise FileNotFoundError(f"PROJECT_DIR does not exist: {PROJECT_DIR}")
+
+    # Step 1: run project-related automation
+    run_project_tasks()
+
+    # Step 2: commit and push to GitHub
+    push_to_github()
+
+    # Step 3: post update on LinkedIn
+    post_to_linkedin()
